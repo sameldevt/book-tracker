@@ -3,8 +3,10 @@ import 'dart:io';
 import 'package:book_tracker/screens/add-book-screen.dart';
 import 'package:book_tracker/services/book-service.dart';
 import 'package:book_tracker/services/isbn-service.dart';
+import 'package:book_tracker/util/date-formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../entities/book.dart';
 
@@ -19,13 +21,14 @@ class _BookListScreenState extends State<BookListScreen> {
   final TextEditingController _controller = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   Book? book;
+  File? selectedMedia;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         leading: null,
-        title: Text(
+        title: const Text(
           'Livros lidos',
           style: TextStyle(color: Colors.white),
         ),
@@ -40,7 +43,7 @@ class _BookListScreenState extends State<BookListScreen> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(6),
                 ),
-                title: Text('Adicionar livro'),
+                title: const Text('Adicionar livro'),
                 content: SingleChildScrollView(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -68,7 +71,7 @@ class _BookListScreenState extends State<BookListScreen> {
                                   return null;
                                 },
                               ),
-                              SizedBox(height: 6),
+                              const SizedBox(height: 6),
                               InkWell(
                                 onTap: () async {
                                   String isbn = _controller.text;
@@ -96,10 +99,16 @@ class _BookListScreenState extends State<BookListScreen> {
                                   ),
                                 ),
                               ),
-                              SizedBox(height: 6),
+                              const SizedBox(height: 6),
                               InkWell(
-                                onTap: () {
-                  
+                                onTap: () async {
+                                  final ImagePicker picker = ImagePicker();
+                                  final photo = await picker.pickImage(source: ImageSource.camera);
+
+                                  if(photo != null){
+                                    var isbn = await _extractNumbers(File(photo.path));
+                                    _controller.text = isbn!;
+                                  }
                                 },
                                 child: Container(
                                   decoration: BoxDecoration(
@@ -134,7 +143,7 @@ class _BookListScreenState extends State<BookListScreen> {
         },
         elevation: 10,
         backgroundColor: Colors.deepPurple,
-        child: Icon(
+        child: const Icon(
           Icons.add,
           color: Colors.white,
         ),
@@ -143,7 +152,7 @@ class _BookListScreenState extends State<BookListScreen> {
         future: BookService().loadBooks(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(
+            return const Center(
               child: CircularProgressIndicator(),
             );
           }
@@ -155,7 +164,7 @@ class _BookListScreenState extends State<BookListScreen> {
           }
 
           if (!snapshot.hasData || snapshot.data == null) {
-            return Center(
+            return const Center(
                 child: Text('No data available'));
           }
 
@@ -172,6 +181,21 @@ class _BookListScreenState extends State<BookListScreen> {
     );
   }
 
+  Future<String?> _extractNumbers(File file) async {
+    final textRecognizer = TextRecognizer(script: TextRecognitionScript.latin);
+    final InputImage inputImage = InputImage.fromFile(file);
+
+    final RecognizedText recognizedText =
+    await textRecognizer.processImage(inputImage);
+
+    String text = recognizedText.text;
+    String numbersOnly = text.replaceAll(RegExp(r'[^0-9]'), '');
+
+    textRecognizer.close();
+
+    return numbersOnly.isNotEmpty ? numbersOnly : null;
+  }
+
   Widget _searchBook(String isbn) {
     return FutureBuilder<Book?>(
       future: IsbnService().getBook(isbn),
@@ -186,7 +210,6 @@ class _BookListScreenState extends State<BookListScreen> {
         }
 
         if (snapshot.hasError) {
-          // Exibe mensagem de erro com melhor formatação
           return Center(
             child: Text(
               'Error: ${snapshot.error}',
@@ -211,80 +234,6 @@ class _BookListScreenState extends State<BookListScreen> {
       },
     );
   }
-
-
-  Widget _buildBookCard() {
-    return Scaffold(
-      appBar: AppBar(
-        iconTheme: IconThemeData(color: Colors.white),
-        title: Text(
-          'Adicionar livro',
-          style: TextStyle(color: Colors.white),
-        ),
-        backgroundColor: Colors.deepPurple,
-      ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Card(
-            elevation: 12,
-            child: SizedBox(
-                width: double.maxFinite,
-                height: 200,
-                child: Row(
-                  children: [
-                    Image.network(
-                      book!.cover,
-                      width: 300,
-                      height: 400,
-                      fit: BoxFit.cover,
-                    ),
-                    Padding(
-                      padding: EdgeInsets.all(8.0),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            book!.title,
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold, fontSize: 20),
-                          ),
-                          Text(
-                            book!.subtitle ?? "",
-                            style: TextStyle(color: Colors.grey, fontSize: 14),
-                          ),
-                          Text(
-                            book!.publisher,
-                            style: TextStyle(color: Colors.grey, fontSize: 14),
-                          ),
-                          Container(
-                            width: 200,
-                            child: Text(
-                              book!.description,
-                              style: TextStyle(fontSize: 14),
-                              maxLines: 3,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          Text(
-                            book!.isbn13,
-                            style: TextStyle(fontSize: 14),
-                          ),
-                          Text(
-                            DateTime.now().toString(),
-                            style: TextStyle(fontSize: 14),
-                          )
-                        ],
-                      ),
-                    )
-                  ],
-                )),
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 class BookCard extends StatefulWidget {
@@ -299,6 +248,9 @@ class BookCard extends StatefulWidget {
 class _BookCardState extends State<BookCard> {
   @override
   Widget build(BuildContext context) {
+    DateTime currentDate = DateTime.now();
+    String formattedDate =  DateFormatter().formatDate(currentDate);
+
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Card(
@@ -315,40 +267,40 @@ class _BookCardState extends State<BookCard> {
                   fit: BoxFit.cover,
                 ),
                 Padding(
-                  padding: EdgeInsets.all(8.0),
+                  padding: const EdgeInsets.all(8.0),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         widget.book.title,
-                        style: TextStyle(
+                        style: const TextStyle(
                             fontWeight: FontWeight.bold, fontSize: 20),
                       ),
                       Text(
                         widget.book.subtitle ?? "",
-                        style: TextStyle(color: Colors.grey, fontSize: 14),
+                        style: const TextStyle(color: Colors.grey, fontSize: 14),
                       ),
                       Text(
                         widget.book.publisher,
-                        style: TextStyle(color: Colors.grey, fontSize: 14),
+                        style: const TextStyle(color: Colors.grey, fontSize: 14),
                       ),
                       Container(
                         width: 200,
                         child: Text(
                           widget.book.description,
-                          style: TextStyle(fontSize: 14),
+                          style: const TextStyle(fontSize: 14),
                           maxLines: 3,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       Text(
-                        widget.book.isbn13,
-                        style: TextStyle(fontSize: 14),
+                        'ISBN: ${widget.book.isbn13}',
+                        style: const TextStyle(color: Colors.grey, fontSize: 14),
                       ),
                       Text(
-                        DateTime.now().toString(),
-                        style: TextStyle(fontSize: 14),
+                        '$formattedDate',
+                        style: const TextStyle(fontSize: 14),
                       )
                     ],
                   ),

@@ -22,8 +22,8 @@ class _AddBookScreenState extends State<AddBookScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        iconTheme: IconThemeData(color: Colors.white),
-        title: Text(
+        iconTheme: const IconThemeData(color: Colors.white),
+        title: const Text(
           'Adicionar livro',
           style: TextStyle(color: Colors.white),
         ),
@@ -62,7 +62,7 @@ class _AddBookScreenState extends State<AddBookScreen> {
                   widget.book.publisher,
                   style: const TextStyle(color: Colors.grey, fontSize: 14),
                 ),
-                SizedBox(height: 10,),
+                const SizedBox(height: 10,),
                 SizedBox(
                   width: double.infinity,
                   child: Text(
@@ -72,7 +72,7 @@ class _AddBookScreenState extends State<AddBookScreen> {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                SizedBox(height: 10,),
+                const SizedBox(height: 10,),
                 Text(
                   'ISBN: ${widget.book.isbn13}',
                   style: const TextStyle(color: Colors.grey, fontSize: 14),
@@ -112,20 +112,5 @@ class _AddBookScreenState extends State<AddBookScreen> {
         ),
       )
     );
-  }
-
-  Future<String?> _extractNumbers(File file) async {
-    final textRecognizer = TextRecognizer(script: TextRecognitionScript.latin);
-    final InputImage inputImage = InputImage.fromFile(file);
-
-    final RecognizedText recognizedText =
-        await textRecognizer.processImage(inputImage);
-
-    String text = recognizedText.text;
-    String numbersOnly = text.replaceAll(RegExp(r'[^0-9]'), '');
-
-    textRecognizer.close();
-
-    return numbersOnly.isNotEmpty ? numbersOnly : null;
   }
 }
