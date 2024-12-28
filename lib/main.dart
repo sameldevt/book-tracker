@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:book_tracker/screens/book-list.dart';
+import 'package:book_tracker/screens/book-list-screen.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:image_picker/image_picker.dart';
@@ -20,7 +20,7 @@ class App extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const BookList(),
+      home: const BookListScreen(),
     );
   }
 }

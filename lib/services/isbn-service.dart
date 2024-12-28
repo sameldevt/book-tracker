@@ -37,12 +37,7 @@ class IsbnService {
     }
   }
 
-  Widget _getCover(String coverId) {
-    return Image.network(
-      '$_coverUrl/$coverId-L.jpg',
-      width: 130,
-      height: 200,
-      fit: BoxFit.cover,
-    );
+  String _getCover(String coverId) {
+    return '$_coverUrl/$coverId-L.jpg';
   }
 }
