@@ -30,6 +30,11 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  google_mlkit_text_recognition: ^0.14.0
+  image_picker: ^1.1.2
+  image_editor: ^1.6.0
+  http: 1.2.2
+  path_provider: ^2.1.5
 
 
   # The following adds the Cupertino Icons font to your application.
